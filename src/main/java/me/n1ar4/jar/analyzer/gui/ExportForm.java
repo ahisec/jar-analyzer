@@ -21,6 +21,8 @@ public class ExportForm {
     private JLabel actionLabel;
     private JLabel jarLabel;
 
+    private static volatile boolean isRunning = false;
+
     public ExportForm() {
         fernRadio.setEnabled(false);
         fernRadio.setSelected(true);
@@ -37,11 +39,17 @@ public class ExportForm {
                 JOptionPane.showMessageDialog(masterPanel, "please enter the output directory");
                 return;
             }
+            if (isRunning) {
+                JOptionPane.showMessageDialog(masterPanel, "decompile is running...");
+                return;
+            }
             new Thread(() -> {
+                isRunning = true;
                 DecompileEngine.decompileJars(path, outputDirText.getText());
                 JOptionPane.showMessageDialog(masterPanel, "jars decompiled successfully");
+                isRunning = false;
             }).start();
-            JOptionPane.showMessageDialog(masterPanel, "please wait");
+            JOptionPane.showMessageDialog(masterPanel, "decompiling please wait...");
         });
     }
 
@@ -70,7 +78,7 @@ public class ExportForm {
      */
     private void $$$setupUI$$$() {
         masterPanel = new JPanel();
-        masterPanel.setLayout(new GridLayoutManager(5, 2, new Insets(0, 0, 0, 0), -1, -1));
+        masterPanel.setLayout(new GridLayoutManager(5, 2, new Insets(5, 5, 5, 5), -1, -1));
         outputDirLabel = new JLabel();
         outputDirLabel.setText("OUTPUT DIR");
         masterPanel.add(outputDirLabel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 1, false));

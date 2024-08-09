@@ -22,6 +22,7 @@ public class CommonMouseAdapter extends MouseAdapter {
     @SuppressWarnings("all")
     public void mouseClicked(MouseEvent evt) {
         JList<?> list = (JList<?>) evt.getSource();
+        // 左键双击
         if (evt.getClickCount() == 2) {
             int index = list.locationToIndex(evt.getPoint());
             MethodResult res = null;
@@ -65,6 +66,9 @@ public class CommonMouseAdapter extends MouseAdapter {
                         finalRes.getMethodDesc()).getArgumentTypes().length;
                 int pos = FinderRunner.find(code, methodName, paramNum);
 
+                // SET FILE TREE HIGHLIGHT
+                SearchInputListener.getFileTree().searchPathTarget(className);
+
                 MainForm.getCodeArea().setText(code);
                 MainForm.getCodeArea().setCaretPosition(pos + 1);
             }).start();
@@ -105,6 +109,22 @@ public class CommonMouseAdapter extends MouseAdapter {
             MainForm.setPrevState(MainForm.getCurState());
             MainForm.setCurState(newState);
             MainForm.setNextState(null);
+        } else if (SwingUtilities.isRightMouseButton(evt)) {
+            JPopupMenu popupMenu = new JPopupMenu();
+            JMenuItem addToFavorite = new JMenuItem("add to favorite");
+            popupMenu.add(addToFavorite);
+            addToFavorite.addActionListener(e -> {
+                MethodResult selectedItem = (MethodResult) list.getSelectedValue();
+                if (selectedItem == null) {
+                    JOptionPane.showMessageDialog(MainForm.getInstance().getMasterPanel(),
+                            "SELECTED METHOD IS NULL");
+                    return;
+                }
+                MainForm.getFavData().addElement(selectedItem);
+            });
+            int index = list.locationToIndex(evt.getPoint());
+            list.setSelectedIndex(index);
+            popupMenu.show(list, evt.getX(), evt.getY());
         }
     }
 }

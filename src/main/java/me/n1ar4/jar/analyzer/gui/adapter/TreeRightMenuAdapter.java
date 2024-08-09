@@ -95,6 +95,10 @@ public class TreeRightMenuAdapter extends MouseAdapter {
                 }
 
                 String code = DecompileEngine.decompile(absPathPath);
+
+                // SET FILE TREE HIGHLIGHT
+                SearchInputListener.getFileTree().searchPathTarget(className);
+
                 MainForm.getCodeArea().setText(code);
                 MainForm.getCodeArea().setCaretPosition(0);
 
@@ -105,6 +109,12 @@ public class TreeRightMenuAdapter extends MouseAdapter {
                 MainForm.getInstance().getCurJarText().setText(jarName);
                 MainForm.getInstance().getCurMethodText().setText(null);
                 MainForm.setCurMethod(null);
+
+                // 重置所有内容
+                MainForm.getInstance().getMethodImplList().setModel(new DefaultListModel<>());
+                MainForm.getInstance().getSuperImplList().setModel(new DefaultListModel<>());
+                MainForm.getInstance().getCalleeList().setModel(new DefaultListModel<>());
+                MainForm.getInstance().getCallerList().setModel(new DefaultListModel<>());
             }
         });
     }

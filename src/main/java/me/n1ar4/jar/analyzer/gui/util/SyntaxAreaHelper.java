@@ -10,8 +10,6 @@ import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.fife.ui.rtextarea.RTextScrollPane;
 
 import javax.swing.*;
-import javax.swing.event.CaretEvent;
-import javax.swing.event.CaretListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Highlighter;
@@ -26,6 +24,9 @@ public class SyntaxAreaHelper {
 
     public static void buildJava(JPanel codePanel) {
         RSyntaxTextArea rArea = new RSyntaxTextArea(300, 300);
+        // 不要使用其他字体
+        // 默认字体支持中文 其他的不一定
+
         rArea.addCaretListener(e -> {
             String selectedText = rArea.getSelectedText();
             if (selectedText == null || selectedText.isEmpty()) {
@@ -48,6 +49,7 @@ public class SyntaxAreaHelper {
                 }
             }
         });
+
         codeArea = rArea;
         codeArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVA);
         codeArea.setCodeFoldingEnabled(true);
@@ -93,12 +95,12 @@ public class SyntaxAreaHelper {
         if (searchResults.isEmpty()) return;
         int index = searchResults.get(currentIndex);
         try {
+            codeArea.setCaretPosition(index);
             Highlighter highlighter = codeArea.getHighlighter();
             Highlighter.HighlightPainter painter =
-                    new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW);
+                    new DefaultHighlighter.DefaultHighlightPainter(Color.CYAN);
             highlighter.removeAllHighlights();
             highlighter.addHighlight(index, index + text.length(), painter);
-            codeArea.setCaretPosition(index);
         } catch (BadLocationException ex) {
             logger.error("bad location: {}", ex.toString());
         }

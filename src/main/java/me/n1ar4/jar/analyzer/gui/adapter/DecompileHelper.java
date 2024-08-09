@@ -38,6 +38,9 @@ public class DecompileHelper {
         }
 
         String code = DecompileEngine.decompile(thePath);
+
+        // SET FILE TREE HIGHLIGHT
+
         MainForm.getCodeArea().setText(code);
         MainForm.getCodeArea().setCaretPosition(0);
 
@@ -57,6 +60,8 @@ public class DecompileHelper {
         }
 
         CoreHelper.refreshAllMethods(className);
+
+        MainForm.setCurClass(className);
 
         MainForm.getInstance().getCurClassText().setText(className);
         String jarName = MainForm.getEngine().getJarByClass(className);

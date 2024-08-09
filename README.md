@@ -1,13 +1,24 @@
-# Jar-Analyzer V2
+# Jar-Analyzer
 
 [CHANGE LOG](src/main/resources/CHANGELOG.MD)
 
 <img alt="gitleaks badge" src="https://img.shields.io/badge/protected%20by-gitleaks-blue">
 
-![](https://github.com/jar-analyzer/jar-analyzer/workflows/maven%20check/badge.svg)
-![](https://github.com/jar-analyzer/jar-analyzer/workflows/leak%20check/badge.svg)
 ![](https://img.shields.io/github/downloads/jar-analyzer/jar-analyzer/total)
 ![](https://img.shields.io/github/v/release/jar-analyzer/jar-analyzer)
+
+![](https://github.com/jar-analyzer/jar-analyzer/workflows/maven%20check/badge.svg)
+![](https://github.com/jar-analyzer/jar-analyzer/workflows/leak%20check/badge.svg)
+![](https://github.com/jar-analyzer/jar-analyzer/workflows/truffle%20check/badge.svg)
+![](https://github.com/jar-analyzer/jar-analyzer/workflows/golang%20check/badge.svg)
+
+首页
+
+![](img/0046.png)
+
+一键快速搜索
+
+![](img/0052.png)
 
 `Jar Analyzer` 是一个分析 `Jar` 文件的 `GUI` 工具：
 
@@ -21,8 +32,6 @@
 - 一键生成方法的 `Stack Frame` 分析结果
 - 远程分析 `Tomcat` 中的 `Servlet` 等组件
 - 自定义 `SQL` 语句进行高级分析
-- 集成 `ClazzSearcher` 项目作为命令行分析版本
-- 允许从字节码层面直接修改方法名（测试功能）
 - 自从 `2.14` 版本之后支持了全屏显示的功能
 - 自从 `2.15` 版本后支持代码区域字符串搜索功能
 - 自从 `2.15` 版本后支持通过 `HTTP` 分析远程文件
@@ -34,6 +43,23 @@
 - 自从 `2.19` 版本后支持实时的 `CPU` 占用和内存的折线图展示（参考 [示例图](img/0040.png)）
 - 自从 `2.20` 版本后支持选中字符串全局高亮显示（参考 [示例图](img/0041.png)）
 - 自从 `2.21` 版本后支持分析配置类和包名的白名单
+- 自从 `2.21` 版本后支持左侧文件数使用 `CTRL+F` 打开类名搜索（参考 [示例图](img/0045.png)）
+- 自从 `2.21` 版本后新增内置开启 `ZGC` 的 `JRE 21` 环境（仅包含核心功能）
+- 自从 `2.23` 版本后新增 `SCA` 分析（可支持 `ASSEMBLY JAR` 和 `LIB JAR` 多种）
+- 自从 `2.24` 版本后改善 `SCA` 分析逻辑（显著提高扫描效率）
+- 自从 `3.0` 版本后支持生成 `HTML` 方法调用图 
+- 自从 `3.0` 版本后支持代码区域选中字符串右键搜索（参考 [示例图](img/0054.png)）
+- 自从 `3.0` 版本后支持方法右键添加备忘录（参考 [示例图](img/0055.png)）
+
+![](img/0053.png)
+
+什么是 `SCA` 分析：输入 `JAR` 文件后根据特定 `CLASS` 的 `HASH` 和规则匹配到 `CVE` 漏洞
+
+![](img/0051.png)
+
+可以生成美观的 `HTML` 报告
+
+![](img/0050.png)
 
 更多的功能正在开发中
 
@@ -43,18 +69,47 @@
 
 `Jar Analyzer` 的用途
 
-- 场景1：从大量 `JAR` 中分析某个方法在哪个 `JAR` 里定义（精确到具体类具体方法）
-- 场景2：从大量 `JAR` 中分析哪里调用了 `Runtime.exec` 方法（精确到具体类具体方法）
-- 场景3：从大量 `JAR` 中分析字符串 `${jndi` 出现在哪些方法（精确到具体类具体方法）
-- 场景4：从大量 `JAR` 中分析有哪些 `Spring Controller/Mapping` 信息（精确到具体类具体方法）
-- 场景5：你需要深入地分析某个方法中 `JVM` 指令调用的传参（带有图形界面）
-- 场景6：你需要深入地分析某个方法中 `JVM` 指令和栈帧的状态（带有图形界面）
-- 场景7：你需要深入地分析某个方法的 `Control Flow Graph` （带有图形界面）
-- 场景8：你有一个 `Tomcat` 需要远程分析其中的 `Servlet/Filter/Listener` 信息
-- 场景9：查实现接口 `A` 继承接口 `B` 类注解 `C` 且方法名 `test` 方法内调用 `D` 类 `a` 方法的方法（表达式搜索）
+- 场景01：从大量 `JAR` 中分析某个方法在哪个 `JAR` 里定义（精确到具体类具体方法）
+- 场景02：从大量 `JAR` 中分析哪里调用了 `Runtime.exec` 方法（精确到具体类具体方法）
+- 场景03：从大量 `JAR` 中分析字符串 `${jndi` 出现在哪些方法（精确到具体类具体方法）
+- 场景04：从大量 `JAR` 中分析有哪些 `Spring Controller/Mapping` 信息（精确到具体类具体方法）
+- 场景05：从大量 `JAR` 中分析是否存在 `Apache Log4j2` 漏洞（匹配所有 `CVE` 漏洞）
+- 场景06：从大量 `JAR` 中分析是否有使用 `FASTJSON 47/68/80` 等存在漏洞的版本
+- 场景07：你需要深入地分析某个方法中 `JVM` 指令调用的传参（带有图形界面）
+- 场景08：你需要深入地分析某个方法中 `JVM` 指令和栈帧的状态（带有图形界面）
+- 场景09：你需要深入地分析某个方法的 `Control Flow Graph` （带有图形界面）
+- 场景10：你有一个 `Tomcat` 需要远程分析其中的 `Servlet/Filter/Listener` 信息
+- 场景11：查实现接口 `A` 继承接口 `B` 类注解 `C` 且方法名 `test` 方法内调用 `D` 类 `a` 方法的方法（表达式搜索）
 - 测试功能：字节码指令级别的调试 | 远程分析 | 一键导出反编译代码
 
 ## 相关
+
+时间
+
+- `Jar Analyzer V1` 最初版诞生于 `2022.11.27`
+- `Jar Analyzer V2` 在 `2023.10.23` 第一次提交
+- `Jar Analyzer v2` 正式版在 `2023.12.07` 发布
+
+计划发版时间
+
+- 2024.08.15
+- 2024.08.29
+- 2024.09.12
+- 2024.09.26
+- 2024.10.10
+
+用户使用文章
+
+- [利用 jar-analyzer 分析 CVE-2022-42889](https://zone.huoxian.cn/d/2884-jar-analyzer-cve-2022-42889)
+- [某人力系统的代码审计](https://forum.butian.net/share/3109)
+
+用户使用视频
+
+- [Jar Analyzer V2 教程（早期版本）](https://www.bilibili.com/video/BV1ac411S7q4)
+- [通过 jar-analyzer 分析漏洞 CVE-2022-42889](https://www.bilibili.com/video/BV1a94y1E7Nn)
+- [Jar Analyzer V2 新版本功能介绍](https://www.bilibili.com/video/BV1Dm421G75i)
+
+性能测试：参考 [性能测试文档](doc/README-test.md) 对比分析 `G1GC` 和 `ZGC` 情况
 
 漏洞公告
 
@@ -62,19 +117,7 @@
 - [\[GHSA-x5h2-78p8-w943\] Jar Analyzer 2.13 版本之前存在 SQL 注入漏洞](https://github.com/jar-analyzer/jar-analyzer/security/advisories/GHSA-x5h2-78p8-w943)
 - [\[GHSA-jmcg-r2c5-7m29\] Jar Analyzer 存在 ZIP SLIP 漏洞（最坏情况可导致 RCE 风险）](https://github.com/jar-analyzer/jar-analyzer/security/advisories/GHSA-jmcg-r2c5-7m29)
 
-文章
-
-- [利用 jar-analyzer 分析 CVE-2022-42889](https://zone.huoxian.cn/d/2884-jar-analyzer-cve-2022-42889)
-- [某人力系统的代码审计](https://forum.butian.net/share/3109)
-
-视频
-
-- [Jar Analyzer V2 教程（早期版本）](https://www.bilibili.com/video/BV1ac411S7q4)
-- [Jar Analyzer V2 新版本功能介绍](https://www.bilibili.com/video/BV1Dm421G75i)
-
-注意：请勿分析数量极多或体积巨大的 `JAR` 文件，可能导致巨大的临时文件和数据库，以及高内存消耗
-
-![](img/0039.png)
+注意：当 `Jar` 数量较多或巨大时**可能导致临时目录和数据库文件巨大**
 
 ## 截图
 
@@ -86,35 +129,9 @@
 
 ![](img/0012.png)
 
-指令分析
-
-![](img/0006.png)
-
-`CFG` 分析
-
-![](img/0007.png)
-
-带图形的 `Stack Frame` 分析
-
-![](img/0008.png)
-
 分析 `Spring Framework`
 
 ![](img/0009.png)
-
-从 `2.8` 版本开始支持 `tomcat` 分析（一检查杀内存马）
-
-![](img/0017.png)
-
-自定义 `SQL` 语句任意分析
-
-![](img/0014.png)
-
-`Jar Analyzer 2.12` 版本以后使用自研 `RASP` 保护程序
-
-(Runtime Application Self-Protection)
-
-![](img/0032.png)
 
 `Jar Analyzer 2.15` 版本以后支持代码区域的搜索
 
@@ -123,10 +140,6 @@
 `Jar Analyzer 2.15` 版本以后支持远程 `Jar` 文件加载
 
 ![](img/0034.png)
-
-`Jar Analyzer 2.17` 版本以后支持远程字节码调试
-
-![](img/0035.png)
 
 `Jar Analyzer 2.17` 版本以后支持从序列化数据中一键提取恶意代码
 
@@ -146,14 +159,20 @@
 
 ![](img/0041.png)
 
+## 进阶功能
+
+以上是基础功能，进阶和测试性的功能请参考：[进阶测试性功能](doc/README-advance.md)
+
 ## 快捷键
 
 - `CTRL+X` 方法交叉引用 快速跳转方法 `caller` 和 `callee` 页面
 - `CTRL+F` 代码区域搜索 打开搜索面板 支持 `next` 和 `prev` 选项
+- `CTRL+F` 文件树区搜索 显示搜索面板 搜索文件树中的类名以及内部类
 
 ## UI 主题
 
 支持以下：
+
 - default (默认使用 类似 `IDEA` 主题)
 - metal
 - win (仅 `Windows` 支持)
@@ -174,10 +193,6 @@
 ```shell
 set "theme_name=default"
 ```
-
-## 命令行
-
-[文档](doc/README-cli.md)
 
 ## 表达式
 
@@ -209,11 +224,9 @@ set "theme_name=default"
 
 1. 构建核心项目 `mvn -B clean package -DskipTests --file pom.xml`
 2. 构建`agent`子项目 `mvn -B clean package -DskipTests --file agent\pom.xml`
-3. 构建命令行子项目 `mvn -B clean package -DskipTests --file class-searcher\pom.xml`
-4. 构建`rasp`子项目 `mvn -B clean package -DskipTests --file jar-analyzer-rasp\pom.xml`
-5. 使用`cmake`构建`native`目录的`C`代码生成`dll`文件放入`resources`
-6. 使用`winres`和`gcc`构建启动`exe`文件和图标信息
-7. 参考`build.py`和`build.yml`文件进行最终的文件合并和版本构建
+3. 使用`cmake`构建`native`目录的`C`代码生成`dll`文件放入`resources`
+4. 使用`winres`和`gcc`构建启动`exe`文件和图标信息 
+5. 参考`build.py`和`build.yml`文件进行最终的文件合并和版本构建
 
 ## Thanks
 
@@ -222,3 +235,11 @@ set "theme_name=default"
 
 This project is developed using JetBrains IDEA.
 Thanks to JetBrains for providing me with a free license, which is a strong support for me.
+
+## Star
+
+<div align="center">
+
+<img src="https://api.star-history.com/svg?repos=jar-analyzer/jar-analyzer&type=Date" width="600" height="400" alt="Star History Chart" valign="middle">
+
+</div>

@@ -1,16 +1,16 @@
 package me.n1ar4.jar.analyzer.gui.util;
 
 import com.github.rjeschke.txtmark.Processor;
-import me.n1ar4.flappy.FBMainFrame;
-import me.n1ar4.http.HttpResponse;
-import me.n1ar4.http.Y4Client;
+import me.n1ar4.games.flappy.FBMainFrame;
+import me.n1ar4.games.plane.Game;
+import me.n1ar4.games.pocker.Main;
 import me.n1ar4.jar.analyzer.gui.*;
+import me.n1ar4.jar.analyzer.http.HttpResponse;
+import me.n1ar4.jar.analyzer.http.Y4Client;
 import me.n1ar4.jar.analyzer.os.SystemChart;
 import me.n1ar4.jar.analyzer.starter.Const;
 import me.n1ar4.log.LogManager;
 import me.n1ar4.log.Logger;
-import me.n1ar4.plane.Game;
-import me.n1ar4.pocker.Main;
 import me.n1ar4.shell.analyzer.form.ShellForm;
 
 import javax.imageio.ImageIO;
@@ -39,6 +39,7 @@ public class MenuUtil {
         sortedByClassConfig.setState(true);
         englishConfig.setState(true);
         chineseConfig.setState(false);
+        logAllSqlConfig.setSelected(true);
 
         chineseConfig.addActionListener(e -> {
             chineseConfig.setState(chineseConfig.getState());
@@ -105,7 +106,7 @@ public class MenuUtil {
         menuBar.add(createGames());
         JMenu system = new JMenu("system info");
         JMenuItem systemItem = new JMenuItem("open");
-        systemItem.addActionListener(e-> SystemChart.start0());
+        systemItem.addActionListener(e -> SystemChart.start0());
         system.add(systemItem);
         menuBar.add(system);
         return menuBar;
@@ -115,7 +116,14 @@ public class MenuUtil {
         JMenu export = new JMenu("export");
         JMenuItem proxyItem = new JMenuItem("decompile and export");
         proxyItem.setIcon(IconManager.javaIcon);
-        proxyItem.addActionListener(e -> ExportForm.start());
+        proxyItem.addActionListener(e -> {
+            if (MainForm.getEngine() == null) {
+                JOptionPane.showMessageDialog(MainForm.getInstance().getMasterPanel(),
+                        "PLEASE LOAD JAR FIRST");
+                return;
+            }
+            ExportForm.start();
+        });
         export.add(proxyItem);
         return export;
     }
@@ -301,7 +309,7 @@ public class MenuUtil {
                         return;
                     }
                     String ver = body.trim();
-                    LogUtil.log("latest: " + ver);
+                    LogUtil.info("latest: " + ver);
                     String output;
                     output = String.format("%s: %s\n%s: %s",
                             "Current Version", Const.version,

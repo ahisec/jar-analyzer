@@ -46,6 +46,10 @@ public class ControllerMouseAdapter extends MouseAdapter {
 
             new Thread(() -> {
                 String code = DecompileEngine.decompile(Paths.get(finalClassPath));
+
+                // SET FILE TREE HIGHLIGHT
+                SearchInputListener.getFileTree().searchPathTarget(className);
+
                 MainForm.getCodeArea().setText(code);
                 MainForm.getCodeArea().setCaretPosition(0);
             }).start();
@@ -70,6 +74,12 @@ public class ControllerMouseAdapter extends MouseAdapter {
             MainForm.getInstance().getCurJarText().setText(jarName);
             MainForm.getInstance().getCurMethodText().setText(null);
             MainForm.setCurMethod(null);
+
+            // 重置所有内容
+            MainForm.getInstance().getMethodImplList().setModel(new DefaultListModel<>());
+            MainForm.getInstance().getSuperImplList().setModel(new DefaultListModel<>());
+            MainForm.getInstance().getCalleeList().setModel(new DefaultListModel<>());
+            MainForm.getInstance().getCallerList().setModel(new DefaultListModel<>());
         }
     }
 }

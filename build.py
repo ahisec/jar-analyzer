@@ -3,7 +3,7 @@ import shutil
 import sys
 import subprocess
 
-VERSION = "2.20"
+VERSION = "2.24"
 PROJECT = "PROJECT: https://github.com/jar-analyzer/jar-analyzer"
 
 
@@ -17,18 +17,6 @@ def copy_jar_files(source_dir, target_dir):
                 final_name = file.split(key_word)[0] + ".jar"
                 target_path = os.path.join(target_dir, final_name)
                 shutil.copy(source_path, target_path)
-
-
-def copy_rasp_files(target_dir):
-    source_path = "rasp-jar-with-dependencies.jar"
-    target_path = os.path.join(target_dir, "rasp.jar")
-    shutil.copy(source_path, target_path)
-
-
-def copy_searcher_files(target_dir):
-    source_path = "class-searcher-1.0.jar"
-    target_path = os.path.join(target_dir, source_path)
-    shutil.copy(source_path, target_path)
 
 
 def copy_config_files(target_dir):
@@ -65,6 +53,7 @@ if __name__ == '__main__':
     print("[*] make new release dir: {}".format(VERSION))
     release_win_system_dir = "jar-analyzer-{}-windows-system".format(VERSION)
     release_win_full_dir = "jar-analyzer-{}-windows-full".format(VERSION)
+    release_win_21_dir = "jar-analyzer-{}-windows-21".format(VERSION)
     release_zip_dir = "jar-analyzer-{}".format(VERSION)
 
     print("[*] make dirs")
@@ -72,33 +61,33 @@ if __name__ == '__main__':
     subprocess.run("mkdir {}\\{}".format(release_win_system_dir, "lib"), shell=True, cwd=target_directory)
     subprocess.run("mkdir {}".format(release_win_full_dir), shell=True, cwd=target_directory)
     subprocess.run("mkdir {}\\{}".format(release_win_full_dir, "lib"), shell=True, cwd=target_directory)
+    subprocess.run("mkdir {}".format(release_win_21_dir), shell=True, cwd=target_directory)
+    subprocess.run("mkdir {}\\{}".format(release_win_21_dir, "lib"), shell=True, cwd=target_directory)
     subprocess.run("mkdir {}".format(release_zip_dir), shell=True, cwd=target_directory)
     subprocess.run("mkdir {}\\{}".format(release_zip_dir, "lib"), shell=True, cwd=target_directory)
 
     print("[*] copy file")
     copy_jar_files(java_target_directory, "{}/{}/{}".format(target_directory, release_win_system_dir, "lib"))
     copy_jar_files(java_target_directory, "{}/{}/{}".format(target_directory, release_win_full_dir, "lib"))
+    copy_jar_files(java_target_directory, "{}/{}/{}".format(target_directory, release_win_21_dir, "lib"))
     copy_jar_files(java_target_directory, "{}/{}/{}".format(target_directory, release_zip_dir, "lib"))
-
-    copy_rasp_files("{}/{}/{}".format(target_directory, release_win_system_dir, "lib"))
-    copy_rasp_files("{}/{}/{}".format(target_directory, release_win_full_dir, "lib"))
-
-    copy_searcher_files("{}/{}/{}".format(target_directory, release_win_system_dir, "lib"))
-    copy_searcher_files("{}/{}/{}".format(target_directory, release_win_full_dir, "lib"))
 
     copy_config_files("{}/{}".format(target_directory, release_win_system_dir))
     copy_config_files("{}/{}".format(target_directory, release_win_full_dir))
 
     copy_exe_files("{}/{}".format(target_directory, release_win_system_dir))
     copy_exe_files("{}/{}".format(target_directory, release_win_full_dir))
+    copy_exe_files("{}/{}".format(target_directory, release_win_21_dir))
 
     print("[*] build start scripts")
     copy_file("build\\start-system.bat", "release\\" + release_win_system_dir + "\\start.bat")
     copy_file("build\\start-full.bat", "release\\" + release_win_full_dir + "\\start.bat")
+    copy_file("build\\start-21.bat", "release\\" + release_win_21_dir + "\\start.bat")
 
     print("[*] build license")
     copy_file("LICENSE", "release\\" + release_win_system_dir + "\\LICENSE")
     copy_file("LICENSE", "release\\" + release_win_full_dir + "\\LICENSE")
+    copy_file("LICENSE", "release\\" + release_win_21_dir + "\\LICENSE")
     copy_file("LICENSE", "release\\" + release_zip_dir + "\\LICENSE")
 
     print("[*] build version")
@@ -106,6 +95,8 @@ if __name__ == '__main__':
                    cwd="{}/{}".format(target_directory, release_win_system_dir))
     subprocess.run("echo {} > {}".format(VERSION, "VERSION.txt"), shell=True,
                    cwd="{}/{}".format(target_directory, release_win_full_dir))
+    subprocess.run("echo {} > {}".format(VERSION, "VERSION.txt"), shell=True,
+                   cwd="{}/{}".format(target_directory, release_win_21_dir))
     subprocess.run("echo {} > {}".format(VERSION, "VERSION.txt"), shell=True,
                    cwd="{}/{}".format(target_directory, release_zip_dir))
 
@@ -115,10 +106,9 @@ if __name__ == '__main__':
     subprocess.run("echo {} > {}".format(PROJECT, "ABOUT.txt"), shell=True,
                    cwd="{}/{}".format(target_directory, release_win_full_dir))
     subprocess.run("echo {} > {}".format(PROJECT, "ABOUT.txt"), shell=True,
+                   cwd="{}/{}".format(target_directory, release_win_21_dir))
+    subprocess.run("echo {} > {}".format(PROJECT, "ABOUT.txt"), shell=True,
                    cwd="{}/{}".format(target_directory, release_zip_dir))
-
-    print("[*] build config.yaml")
-
 
     print("[*] copy build agent.jar")
     copy_file("agent-jar-with-dependencies.jar", "lib\\agent.jar")
@@ -134,5 +124,7 @@ if __name__ == '__main__':
     print("[*] copy windows attach.dll")
     subprocess.run("mkdir {}\\jre\\bin".format(release_win_full_dir), shell=True, cwd=target_directory)
     copy_file("lib\\attach.dll", "release\\" + release_win_full_dir + "\\jre\\bin\\attach.dll")
+
+    # JAVA 21 NOT SUPPORT SHELL ANALYZER
 
     print("[*] build finish")

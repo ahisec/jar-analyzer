@@ -9,6 +9,7 @@ import me.n1ar4.jar.analyzer.engine.CoreEngine;
 import me.n1ar4.jar.analyzer.engine.DecompileEngine;
 import me.n1ar4.jar.analyzer.entity.ClassResult;
 import me.n1ar4.jar.analyzer.entity.MethodResult;
+import me.n1ar4.jar.analyzer.graph.HtmlGraph;
 import me.n1ar4.jar.analyzer.gui.action.*;
 import me.n1ar4.jar.analyzer.gui.adapter.*;
 import me.n1ar4.jar.analyzer.gui.font.FontHelper;
@@ -21,6 +22,7 @@ import me.n1ar4.jar.analyzer.gui.tree.FileTree;
 import me.n1ar4.jar.analyzer.gui.update.UpdateChecker;
 import me.n1ar4.jar.analyzer.gui.util.*;
 import me.n1ar4.jar.analyzer.gui.vul.*;
+import me.n1ar4.jar.analyzer.sca.SCAAction;
 import me.n1ar4.jar.analyzer.starter.Const;
 import me.n1ar4.jar.analyzer.utils.DirUtil;
 import me.n1ar4.log.LogManager;
@@ -38,6 +40,18 @@ import java.util.Locale;
 
 public class MainForm {
     private static final Logger logger = LogManager.getLogger();
+    // FOR CLI
+    private static final MainForm fakeInstance = new MainForm(true);
+    private static MainForm instance;
+    private static ConfigFile config;
+    private static CoreEngine engine;
+    private static JTextArea codeArea;
+    private static MethodResult curMethod;
+    private static String curClass;
+    private static State prevState;
+    private static State nextState;
+    private static State curState;
+    private static DefaultListModel<MethodResult> historyListData;
     private JPanel masterPanel;
     private JTabbedPane tabbedPanel;
     private JPanel codePanel;
@@ -71,11 +85,11 @@ public class MainForm {
     private FileTree fileTree;
     private JPanel logPanel;
     private JScrollPane logScroll;
-    private JTextArea logArea;
+    private JTextPane logArea;
     private JPanel curMethodPanel;
     private JScrollPane allMethodScroll;
     private JList<MethodResult> allMethodList;
-    private JPanel historyPanel;
+    private JPanel notePanel;
     private JPanel advancePanel;
     private JScrollPane hisScroll;
     private JList<MethodResult> callerList;
@@ -137,8 +151,6 @@ public class MainForm {
     private JList<MethodResult> superImplList;
     private JPanel analysis;
     private JButton cfgBtn;
-    private JLabel cfgLabel;
-    private JLabel frameLabel;
     private JButton frameBtn;
     private JButton encoderBtn;
     private JButton repeaterBtn;
@@ -178,6 +190,7 @@ public class MainForm {
     private JButton unzipButton;
     private JButton hessianButton;
     private JButton springELStartButton;
+    @SuppressWarnings("all")
     private JLabel spelLabel;
     private JButton startELSearchButton;
     private JButton obfBtn;
@@ -187,38 +200,114 @@ public class MainForm {
     private JScrollPane classWhitePanel;
     private JTextArea classWhiteArea;
     private JLabel classWhiteListLabel;
-    private static MainForm instance;
-    private static ConfigFile config;
-    private static CoreEngine engine;
-    private static JTextArea codeArea;
-    private static MethodResult curMethod;
-    private static State prevState;
-    private static State nextState;
-    private static State curState;
-    private static DefaultListModel<MethodResult> historyListData;
+    private JButton pathSearchButton;
+    private JLabel pathSearchLabel;
+    private JTextField pathSearchTextField;
+    private JTextField fileTreeSearchTextField;
+    private JPanel fileTreeSearchPanel;
+    private JLabel fileTreeSearchLabel;
+    private JPanel searchFileNamePanel;
+    private JPanel scaPanel;
+    private JCheckBox scaLog4jBox;
+    private JCheckBox scaShiroBox;
+    private JCheckBox scaFastjsonBox;
+    private JPanel modulePanel;
+    private JTextField scaFileText;
+    private JButton scaOpenBtn;
+    private JTextArea scaConsoleArea;
+    private JRadioButton scaOutConsoleRadio;
+    private JRadioButton scaOutHtmlRadio;
+    private JButton scaStartBtn;
+    private JPanel scaOutPanel;
+    private JLabel scaOutLabel;
+    private JScrollPane scanConsoleScroll;
+    private JLabel scaFileLabel;
+    private JPanel scaActionPanel;
+    private JPanel scaTipPanel;
+    private JLabel scaTipLabel;
+    private JLabel outputFileLabel;
+    private JTextField outputFileText;
+    private JButton scaResultOpenBtn;
+    private JButton htmlGraphBtn;
+    private JScrollPane favScroll;
+    private JList<MethodResult> favList;
+    private JButton addToFavoritesButton;
+    private static DefaultListModel<MethodResult> favData;
 
-    public static State getPrevState() {
-        return prevState;
+    public static String getCurClass() {
+        return curClass;
     }
 
-    public static void setPrevState(State prevState) {
-        MainForm.prevState = prevState;
+    public static void setCurClass(String curClass) {
+        MainForm.curClass = curClass;
     }
 
-    public static State getNextState() {
-        return nextState;
+    public static DefaultListModel<MethodResult> getFavData() {
+        return favData;
     }
 
-    public static void setNextState(State nextState) {
-        MainForm.nextState = nextState;
+    public JButton getAddToFavoritesButton() {
+        return addToFavoritesButton;
     }
 
-    public static State getCurState() {
-        return curState;
+    public JButton getHtmlGraphBtn() {
+        return htmlGraphBtn;
     }
 
-    public static void setCurState(State curState) {
-        MainForm.curState = curState;
+    public JCheckBox getScaLog4jBox() {
+        return scaLog4jBox;
+    }
+
+    public JCheckBox getScaShiroBox() {
+        return scaShiroBox;
+    }
+
+    public JCheckBox getScaFastjsonBox() {
+        return scaFastjsonBox;
+    }
+
+    public JTextField getScaFileText() {
+        return scaFileText;
+    }
+
+    public JButton getScaOpenBtn() {
+        return scaOpenBtn;
+    }
+
+    public JTextArea getScaConsoleArea() {
+        return scaConsoleArea;
+    }
+
+    public JRadioButton getScaOutConsoleRadio() {
+        return scaOutConsoleRadio;
+    }
+
+    public JRadioButton getScaOutHtmlRadio() {
+        return scaOutHtmlRadio;
+    }
+
+    public JButton getScaStartBtn() {
+        return scaStartBtn;
+    }
+
+    public JLabel getFileTreeSearchLabel() {
+        return fileTreeSearchLabel;
+    }
+
+    public JButton getPathSearchButton() {
+        return pathSearchButton;
+    }
+
+    public JTextField getPathSearchTextField() {
+        return pathSearchTextField;
+    }
+
+    public JTextField getFileTreeSearchTextField() {
+        return fileTreeSearchTextField;
+    }
+
+    public JPanel getFileTreeSearchPanel() {
+        return fileTreeSearchPanel;
     }
 
     public JList<ClassResult> getSpringCList() {
@@ -239,39 +328,6 @@ public class MainForm {
 
     public JButton getListenerBtn() {
         return listenerBtn;
-    }
-
-    // FOR CLI
-    private static final MainForm fakeInstance = new MainForm(true);
-
-    public MainForm(boolean fake) {
-        if (fake) {
-            logger.info("init fake instance");
-        }
-    }
-
-    public static MainForm getInstance() {
-        if (instance == null) {
-            return fakeInstance;
-        } else {
-            return instance;
-        }
-    }
-
-    public static void setCodeArea(JTextArea codeArea) {
-        MainForm.codeArea = codeArea;
-    }
-
-    public static MethodResult getCurMethod() {
-        return curMethod;
-    }
-
-    public static void setCurMethod(MethodResult curMethod) {
-        MainForm.curMethod = curMethod;
-    }
-
-    public static JTextArea getCodeArea() {
-        return codeArea;
     }
 
     public FileTree getFileTree() {
@@ -316,22 +372,6 @@ public class MainForm {
 
     public JLabel getDatabaseSizeVal() {
         return databaseSizeVal;
-    }
-
-    public static CoreEngine getEngine() {
-        return engine;
-    }
-
-    public static void setEngine(CoreEngine engine) {
-        MainForm.engine = engine;
-    }
-
-    public static ConfigFile getConfig() {
-        return config;
-    }
-
-    public static void setConfig(ConfigFile config) {
-        MainForm.config = config;
     }
 
     public JLabel getEngineVal() {
@@ -412,10 +452,6 @@ public class MainForm {
 
     public JTabbedPane getTabbedPanel() {
         return tabbedPanel;
-    }
-
-    public static DefaultListModel<MethodResult> getHistoryListData() {
-        return historyListData;
     }
 
     public JList<MethodResult> getHistoryList() {
@@ -574,35 +610,85 @@ public class MainForm {
         return serUtilBtn;
     }
 
-    private void resolveConfig() {
-        if (config != null) {
-            String temp = config.getTempPath();
-            String db = config.getDbPath();
-            if (temp == null || db == null) {
-                return;
-            }
-            if (Files.exists(Paths.get(temp)) && Files.exists(Paths.get(db))) {
-                databaseSizeVal.setText(config.getDbSize());
-                totalClassVal.setText(config.getTotalClass());
-                totalJarVal.setText(config.getTotalJar());
-                totalMethodVal.setText(config.getTotalMethod());
-                fileText.setText(config.getJarPath());
-                loadDBText.setText(config.getDbPath());
+    public static State getPrevState() {
+        return prevState;
+    }
 
-                engine = new CoreEngine(config);
-                engineVal.setText("RUNNING");
-                engineVal.setForeground(Color.GREEN);
-                buildBar.setValue(100);
-            } else {
-                try {
-                    Files.delete(Paths.get(ConfigEngine.CONFIG_FILE_PATH));
-                } catch (Exception ignored) {
-                }
-                try {
-                    DirUtil.removeDir(new File(Const.tempDir));
-                } catch (Exception ignored) {
-                }
-            }
+    public static void setPrevState(State prevState) {
+        MainForm.prevState = prevState;
+    }
+
+    public static State getNextState() {
+        return nextState;
+    }
+
+    public static void setNextState(State nextState) {
+        MainForm.nextState = nextState;
+    }
+
+    public static State getCurState() {
+        return curState;
+    }
+
+    public static void setCurState(State curState) {
+        MainForm.curState = curState;
+    }
+
+    public JTextField getOutputFileText() {
+        return outputFileText;
+    }
+
+    public JButton getScaResultOpenBtn() {
+        return scaResultOpenBtn;
+    }
+
+    public static MainForm getInstance() {
+        if (instance == null) {
+            return fakeInstance;
+        } else {
+            return instance;
+        }
+    }
+
+    public static MethodResult getCurMethod() {
+        return curMethod;
+    }
+
+    public static void setCurMethod(MethodResult curMethod) {
+        MainForm.curMethod = curMethod;
+    }
+
+    public static JTextArea getCodeArea() {
+        return codeArea;
+    }
+
+    public static void setCodeArea(JTextArea codeArea) {
+        MainForm.codeArea = codeArea;
+    }
+
+    public static CoreEngine getEngine() {
+        return engine;
+    }
+
+    public static void setEngine(CoreEngine engine) {
+        MainForm.engine = engine;
+    }
+
+    public static ConfigFile getConfig() {
+        return config;
+    }
+
+    public static void setConfig(ConfigFile config) {
+        MainForm.config = config;
+    }
+
+    public static DefaultListModel<MethodResult> getHistoryListData() {
+        return historyListData;
+    }
+
+    public MainForm(boolean fake) {
+        if (fake) {
+            logger.info("init fake instance");
         }
     }
 
@@ -634,8 +720,12 @@ public class MainForm {
         springMList.setCellRenderer(new SpringMethodRender());
 
         historyList.setCellRenderer(new MethodCallRender());
+        favList.setCellRenderer(new MethodCallRender());
+
         historyListData = new DefaultListModel<>();
         historyList.setModel(historyListData);
+        favData = new DefaultListModel<>();
+        favList.setModel(favData);
 
         prevBtn.setIcon(IconManager.prevIcon);
         nextBtn.setIcon(IconManager.nextIcon);
@@ -666,6 +756,7 @@ public class MainForm {
     private static void init() {
         FontHelper.installFont();
         DropHelper.setDrop();
+        CodeMenuHelper.run();
 
         ChoseJarAction.run();
         BuildAction.run();
@@ -680,7 +771,9 @@ public class MainForm {
         CleanAction.run();
         ShowStringAction.run();
         TipsAction.run();
+        HtmlGraph.run();
 
+        SCAAction.register();
         JNDIVulAction.register();
         RuntimeExecAction.register();
         ProcessBuilderAction.register();
@@ -694,13 +787,17 @@ public class MainForm {
         ZIPVulAction.register();
         HessianAction.register();
 
+        Font codeFont = FontHelper.getFont();
+        instance.blackArea.setFont(codeFont);
+        instance.classBlackArea.setFont(codeFont);
+        instance.classWhiteArea.setFont(codeFont);
+
         codeArea.addKeyListener(new GlobalKeyListener());
         instance.allMethodList.addKeyListener(new GlobalKeyListener());
-
+        instance.fileTree.addKeyListener(new FileTreeKeyAdapter());
         instance.fileTree.addMouseListener(new TreeMouseAdapter());
         instance.fileTree.addMouseListener(new TreeRightMenuAdapter());
         instance.allMethodList.addMouseListener(new CommonMouseAdapter());
-        instance.allMethodList.addMouseListener(new MethodRightMenuAdapter());
         instance.callerList.addMouseListener(new CommonMouseAdapter());
         instance.calleeList.addMouseListener(new CommonMouseAdapter());
         instance.methodImplList.addMouseListener(new CommonMouseAdapter());
@@ -709,6 +806,19 @@ public class MainForm {
         instance.historyList.addMouseListener(new CommonMouseAdapter());
         instance.springCList.addMouseListener(new ControllerMouseAdapter());
         instance.springMList.addMouseListener(new CommonMouseAdapter());
+        instance.favList.addMouseListener(new FavMouseAdapter());
+        instance.fileTreeSearchTextField.getDocument().addDocumentListener(new SearchInputListener());
+        instance.fileTreeSearchTextField.addKeyListener(new SearchTextFieldKeyAdapter());
+        instance.fileTreeSearchTextField.addKeyListener(new FileTreeKeyAdapter());
+
+        instance.getAddToFavoritesButton().addActionListener(e -> {
+            if (curMethod != null) {
+                getFavData().addElement(curMethod);
+                JOptionPane.showMessageDialog(instance.masterPanel, "add current method to favorite ok");
+            } else {
+                JOptionPane.showMessageDialog(instance.masterPanel, "current method is null");
+            }
+        });
 
         refreshLang();
     }
@@ -724,7 +834,7 @@ public class MainForm {
                                 null, null));
 
                 int c = instance.tabbedPanel.getTabCount();
-                if (c != 7) {
+                if (c != 8) {
                     throw new RuntimeException("tabbed panel error");
                 }
                 instance.tabbedPanel.setTitleAt(0, "开始");
@@ -732,8 +842,9 @@ public class MainForm {
                 instance.tabbedPanel.setTitleAt(2, "调用");
                 instance.tabbedPanel.setTitleAt(3, "实现");
                 instance.tabbedPanel.setTitleAt(4, "spring");
-                instance.tabbedPanel.setTitleAt(5, "历史");
-                instance.tabbedPanel.setTitleAt(6, "高级");
+                instance.tabbedPanel.setTitleAt(5, "记录");
+                instance.tabbedPanel.setTitleAt(6, "SCA");
+                instance.tabbedPanel.setTitleAt(7, "高级");
 
                 instance.chosePanel.setBorder(
                         BorderFactory.createTitledBorder(null,
@@ -788,9 +899,7 @@ public class MainForm {
                         TitledBorder.DEFAULT_JUSTIFICATION,
                         TitledBorder.DEFAULT_POSITION,
                         null, null));
-                instance.cfgLabel.setText("控制流图分析");
                 instance.cfgBtn.setText("展示控制流图");
-                instance.frameLabel.setText("JVM栈帧分析");
                 instance.frameBtn.setText("完整栈帧");
                 instance.simpleFrameButton.setText("简易栈帧");
 
@@ -810,6 +919,8 @@ public class MainForm {
                 instance.classBlackLabel.setText("类名黑名单 (完整类名并使用 ; 和 \\n 分割)");
                 instance.startSearchButton.setText("开始搜索");
                 instance.springLabel.setText("分析 JAR/JARS 中的 Spring Controller/Mapping 信息");
+                instance.pathSearchButton.setText("查找");
+                instance.pathSearchLabel.setText("在所有 Mapping 中查找 Path");
                 instance.refreshButton.setText("刷新");
                 instance.javaVulLabel.setText("快速搜索通用 JAVA 漏洞相关");
 
@@ -821,6 +932,8 @@ public class MainForm {
                 instance.startELSearchButton.setText("开始表达式搜索");
                 instance.obfLabel.setText("一个 Java 序列化数据混淆工具");
                 instance.serUtilLabel.setText("一个分析 Java 序列化数据中字节码的工具");
+
+                instance.scaTipLabel.setText(" 不建议一次分析开启多个模块");
             } else if (GlobalOptions.getLang() == GlobalOptions.ENGLISH) {
                 instance.codePanel.setBorder(
                         BorderFactory.createTitledBorder(null,
@@ -830,7 +943,7 @@ public class MainForm {
                                 null, null));
 
                 int c = instance.tabbedPanel.getTabCount();
-                if (c != 7) {
+                if (c != 8) {
                     throw new RuntimeException("tabbed panel error");
                 }
                 instance.tabbedPanel.setTitleAt(0, "start");
@@ -838,8 +951,9 @@ public class MainForm {
                 instance.tabbedPanel.setTitleAt(2, "call");
                 instance.tabbedPanel.setTitleAt(3, "impl");
                 instance.tabbedPanel.setTitleAt(4, "spring");
-                instance.tabbedPanel.setTitleAt(5, "history");
-                instance.tabbedPanel.setTitleAt(6, "advance");
+                instance.tabbedPanel.setTitleAt(5, "note");
+                instance.tabbedPanel.setTitleAt(6, "SCA");
+                instance.tabbedPanel.setTitleAt(7, "advance");
 
                 instance.chosePanel.setBorder(
                         BorderFactory.createTitledBorder(null,
@@ -894,9 +1008,7 @@ public class MainForm {
                         TitledBorder.DEFAULT_JUSTIFICATION,
                         TitledBorder.DEFAULT_POSITION,
                         null, null));
-                instance.cfgLabel.setText("Control Flow Graph Analysis");
                 instance.cfgBtn.setText("Show CFG");
-                instance.frameLabel.setText("Java Stack Frame Analysis");
                 instance.frameBtn.setText("Full Frame");
                 instance.simpleFrameButton.setText("Simple Frame");
 
@@ -916,6 +1028,8 @@ public class MainForm {
                 instance.classBlackLabel.setText("Class Name Black List (full class name and split by ; and \\n)");
                 instance.startSearchButton.setText("Start Search");
                 instance.springLabel.setText(" Analyze Spring Controllers and Mappings in Jar/Jars");
+                instance.pathSearchButton.setText("Search");
+                instance.pathSearchLabel.setText(" Search path in all Mappings");
                 instance.refreshButton.setText("Refresh");
                 instance.javaVulLabel.setText("Quickly Search Commons Java Vulnerabilities Call");
 
@@ -927,6 +1041,8 @@ public class MainForm {
                 instance.startELSearchButton.setText("Start EL Search");
                 instance.obfLabel.setText("A tool for obfuscate java serialization data");
                 instance.serUtilLabel.setText("A tool for bytecodes in Java Serialization Data");
+
+                instance.scaTipLabel.setText(" not recommended to enable multiple modules in one analysis");
             } else {
                 throw new RuntimeException("invalid language");
             }
@@ -953,6 +1069,38 @@ public class MainForm {
         frame.pack();
         frame.setResizable(true);
         frame.setVisible(true);
+    }
+
+    private void resolveConfig() {
+        if (config != null) {
+            String temp = config.getTempPath();
+            String db = config.getDbPath();
+            if (temp == null || db == null) {
+                return;
+            }
+            if (Files.exists(Paths.get(temp)) && Files.exists(Paths.get(db))) {
+                databaseSizeVal.setText(config.getDbSize());
+                totalClassVal.setText(config.getTotalClass());
+                totalJarVal.setText(config.getTotalJar());
+                totalMethodVal.setText(config.getTotalMethod());
+                fileText.setText(config.getJarPath());
+                loadDBText.setText(config.getDbPath());
+
+                engine = new CoreEngine(config);
+                engineVal.setText("RUNNING");
+                engineVal.setForeground(Color.GREEN);
+                buildBar.setValue(100);
+            } else {
+                try {
+                    Files.delete(Paths.get(ConfigEngine.CONFIG_FILE_PATH));
+                } catch (Exception ignored) {
+                }
+                try {
+                    DirUtil.removeDir(new File(Const.tempDir));
+                } catch (Exception ignored) {
+                }
+            }
+        }
     }
 
     {
@@ -982,10 +1130,10 @@ public class MainForm {
         tabbedPanel = new JTabbedPane();
         corePanel.add(tabbedPanel, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_VERTICAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, new Dimension(500, -1), new Dimension(500, 200), new Dimension(500, -1), 0, false));
         startPanel = new JPanel();
-        startPanel.setLayout(new GridLayoutManager(6, 1, new Insets(0, 0, 0, 0), -1, -1));
+        startPanel.setLayout(new GridLayoutManager(3, 1, new Insets(0, 0, 0, 0), -1, -1));
         tabbedPanel.addTab("start", startPanel);
         chosePanel = new JPanel();
-        chosePanel.setLayout(new GridLayoutManager(8, 6, new Insets(0, 0, 0, 0), -1, -1));
+        chosePanel.setLayout(new GridLayoutManager(9, 6, new Insets(0, 0, 0, 0), -1, -1));
         startPanel.add(chosePanel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
         chosePanel.setBorder(BorderFactory.createTitledBorder(null, "Starter", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
         choseBtn = new JButton();
@@ -1033,20 +1181,26 @@ public class MainForm {
         classBlackListLabel.setText("Class Black List");
         chosePanel.add(classBlackListLabel, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_NORTHWEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 1, false));
         classBlackPanel = new JScrollPane();
-        chosePanel.add(classBlackPanel, new GridConstraints(4, 1, 1, 5, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, new Dimension(-1, 66), new Dimension(-1, 66), new Dimension(-1, 66), 0, false));
+        chosePanel.add(classBlackPanel, new GridConstraints(4, 1, 1, 5, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, new Dimension(-1, 75), new Dimension(-1, 75), new Dimension(-1, 75), 0, false));
         classBlackArea = new JTextArea();
+        classBlackArea.setBackground(new Color(-12895429));
+        classBlackArea.setForeground(new Color(-16711931));
+        classBlackArea.setRows(0);
         classBlackPanel.setViewportView(classBlackArea);
         classWhiteListLabel = new JLabel();
         classWhiteListLabel.setText("Class White List");
         chosePanel.add(classWhiteListLabel, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 1, false));
         classWhitePanel = new JScrollPane();
-        chosePanel.add(classWhitePanel, new GridConstraints(3, 1, 1, 5, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        chosePanel.add(classWhitePanel, new GridConstraints(3, 1, 1, 5, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, new Dimension(-1, 75), new Dimension(-1, 75), new Dimension(-1, 75), 0, false));
         classWhiteArea = new JTextArea();
+        classWhiteArea.setBackground(new Color(-12895429));
+        classWhiteArea.setForeground(new Color(-853761));
+        classWhiteArea.setRows(0);
         classWhiteArea.setText("");
         classWhitePanel.setViewportView(classWhiteArea);
         decompilerPanel = new JPanel();
         decompilerPanel.setLayout(new GridLayoutManager(2, 2, new Insets(0, 0, 0, 0), -1, -1));
-        startPanel.add(decompilerPanel, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        chosePanel.add(decompilerPanel, new GridConstraints(8, 0, 1, 6, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
         decompilerPanel.setBorder(BorderFactory.createTitledBorder(null, "Decompiler", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
         fernRadio = new JRadioButton();
         fernRadio.setEnabled(true);
@@ -1102,30 +1256,9 @@ public class MainForm {
         authorTextLabel = new JLabel();
         authorTextLabel.setText("4ra1n");
         authorPanel.add(authorTextLabel, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        final Spacer spacer1 = new Spacer();
-        startPanel.add(spacer1, new GridConstraints(5, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
-        analysis = new JPanel();
-        analysis.setLayout(new GridLayoutManager(2, 3, new Insets(0, 0, 0, 0), -1, -1));
-        startPanel.add(analysis, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-        analysis.setBorder(BorderFactory.createTitledBorder(null, "Analysis", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
-        cfgBtn = new JButton();
-        cfgBtn.setText("Show CFG");
-        analysis.add(cfgBtn, new GridConstraints(0, 1, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, new Dimension(150, -1), 0, false));
-        cfgLabel = new JLabel();
-        cfgLabel.setText("Control Flow Graph Analysis");
-        analysis.add(cfgLabel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        frameLabel = new JLabel();
-        frameLabel.setText("Java Stack Frame Analysis");
-        analysis.add(frameLabel, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        frameBtn = new JButton();
-        frameBtn.setText("Full Frame");
-        analysis.add(frameBtn, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, new Dimension(150, -1), 0, false));
-        simpleFrameButton = new JButton();
-        simpleFrameButton.setText("Simple Frame");
-        analysis.add(simpleFrameButton, new GridConstraints(1, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, new Dimension(150, -1), 0, false));
         actionPanel = new JPanel();
         actionPanel.setLayout(new GridLayoutManager(1, 5, new Insets(0, 0, 0, 0), -1, -1));
-        startPanel.add(actionPanel, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        startPanel.add(actionPanel, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
         actionPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(), "", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
         prevBtn = new JButton();
         prevBtn.setText("");
@@ -1206,8 +1339,10 @@ public class MainForm {
         blackListPanel.add(blackScroll, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, new Dimension(-1, 100), new Dimension(-1, 100), new Dimension(-1, 100), 0, false));
         blackScroll.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(), null, TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
         blackArea = new JTextArea();
+        blackArea.setBackground(new Color(-12895429));
         Font blackAreaFont = this.$$$getFont$$$("Consolas", -1, -1, blackArea.getFont());
         if (blackAreaFont != null) blackArea.setFont(blackAreaFont);
+        blackArea.setForeground(new Color(-16711931));
         blackScroll.setViewportView(blackArea);
         classBlackLabel = new JLabel();
         classBlackLabel.setText("Class Name Black List (split by ; and \\n)");
@@ -1250,19 +1385,28 @@ public class MainForm {
         springPanel.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
         tabbedPanel.addTab("spring", springPanel);
         springCPanel = new JPanel();
-        springCPanel.setLayout(new GridLayoutManager(2, 2, new Insets(0, 0, 0, 0), -1, -1));
+        springCPanel.setLayout(new GridLayoutManager(3, 3, new Insets(0, 0, 0, 0), -1, -1));
         springPanel.add(springCPanel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
         springCPanel.setBorder(BorderFactory.createTitledBorder(null, "Spring Controllers", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
         scScroll = new JScrollPane();
-        springCPanel.add(scScroll, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        springCPanel.add(scScroll, new GridConstraints(2, 0, 1, 3, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         springCList = new JList();
         scScroll.setViewportView(springCList);
         refreshButton = new JButton();
         refreshButton.setText("Refresh");
-        springCPanel.add(refreshButton, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        springCPanel.add(refreshButton, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         springLabel = new JLabel();
         springLabel.setText(" Analyze Spring Controllers and Mappings in Jar/Jars");
-        springCPanel.add(springLabel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        springCPanel.add(springLabel, new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        pathSearchButton = new JButton();
+        pathSearchButton.setText("Search");
+        springCPanel.add(pathSearchButton, new GridConstraints(1, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        pathSearchLabel = new JLabel();
+        pathSearchLabel.setText(" Search path in all Mappings");
+        springCPanel.add(pathSearchLabel, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        pathSearchTextField = new JTextField();
+        pathSearchTextField.setToolTipText("");
+        springCPanel.add(pathSearchTextField, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
         springMPanel = new JPanel();
         springMPanel.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
         springPanel.add(springMPanel, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
@@ -1271,19 +1415,96 @@ public class MainForm {
         springMPanel.add(smScroll, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         springMList = new JList();
         smScroll.setViewportView(springMList);
-        historyPanel = new JPanel();
-        historyPanel.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
-        tabbedPanel.addTab("history", historyPanel);
+        notePanel = new JPanel();
+        notePanel.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
+        tabbedPanel.addTab("note", notePanel);
         hisScroll = new JScrollPane();
-        historyPanel.add(hisScroll, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        notePanel.add(hisScroll, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        hisScroll.setBorder(BorderFactory.createTitledBorder(null, "history", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
         historyList = new JList();
+        final DefaultListModel defaultListModel2 = new DefaultListModel();
+        historyList.setModel(defaultListModel2);
         hisScroll.setViewportView(historyList);
+        favScroll = new JScrollPane();
+        notePanel.add(favScroll, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        favScroll.setBorder(BorderFactory.createTitledBorder(null, "favorites", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
+        favList = new JList();
+        favScroll.setViewportView(favList);
+        scaPanel = new JPanel();
+        scaPanel.setLayout(new GridLayoutManager(3, 1, new Insets(0, 0, 0, 0), -1, -1));
+        tabbedPanel.addTab("SCA", scaPanel);
+        modulePanel = new JPanel();
+        modulePanel.setLayout(new GridLayoutManager(2, 3, new Insets(0, 0, 0, 0), -1, -1));
+        scaPanel.add(modulePanel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        modulePanel.setBorder(BorderFactory.createTitledBorder(null, "Module", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
+        scaLog4jBox = new JCheckBox();
+        scaLog4jBox.setText("Apache Log4j2");
+        modulePanel.add(scaLog4jBox, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        scaShiroBox = new JCheckBox();
+        scaShiroBox.setText("Apache Shiro");
+        modulePanel.add(scaShiroBox, new GridConstraints(1, 2, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        scaTipPanel = new JPanel();
+        scaTipPanel.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+        modulePanel.add(scaTipPanel, new GridConstraints(0, 0, 1, 3, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        scaTipLabel = new JLabel();
+        scaTipLabel.setText(" not recommended to enable multiple modules in one analysis");
+        scaTipPanel.add(scaTipLabel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        scaFastjsonBox = new JCheckBox();
+        scaFastjsonBox.setText("FASTJSON");
+        modulePanel.add(scaFastjsonBox, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final Spacer spacer1 = new Spacer();
+        scaPanel.add(spacer1, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        scaActionPanel = new JPanel();
+        scaActionPanel.setLayout(new GridLayoutManager(4, 3, new Insets(0, 0, 0, 0), -1, -1));
+        scaPanel.add(scaActionPanel, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        scaActionPanel.setBorder(BorderFactory.createTitledBorder(null, "Action", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
+        scaFileLabel = new JLabel();
+        scaFileLabel.setText("JAR FILE / JAR DIR");
+        scaActionPanel.add(scaFileLabel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 1, false));
+        scaFileText = new JTextField();
+        scaActionPanel.add(scaFileText, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
+        scaOpenBtn = new JButton();
+        scaOpenBtn.setText("OPEN");
+        scaActionPanel.add(scaOpenBtn, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        scanConsoleScroll = new JScrollPane();
+        scaActionPanel.add(scanConsoleScroll, new GridConstraints(3, 0, 1, 3, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        scanConsoleScroll.setBorder(BorderFactory.createTitledBorder(null, "", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
+        scaConsoleArea = new JTextArea();
+        scaConsoleArea.setBackground(new Color(-12895429));
+        scaConsoleArea.setEditable(false);
+        scaConsoleArea.setForeground(new Color(-16711931));
+        scaConsoleArea.setLineWrap(true);
+        scaConsoleArea.setRows(20);
+        scanConsoleScroll.setViewportView(scaConsoleArea);
+        scaOutLabel = new JLabel();
+        scaOutLabel.setText("OUTPUT");
+        scaActionPanel.add(scaOutLabel, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 1, false));
+        scaOutPanel = new JPanel();
+        scaOutPanel.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
+        scaActionPanel.add(scaOutPanel, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        scaOutConsoleRadio = new JRadioButton();
+        scaOutConsoleRadio.setText("CONSOLE");
+        scaOutPanel.add(scaOutConsoleRadio, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        scaOutHtmlRadio = new JRadioButton();
+        scaOutHtmlRadio.setText("HTML");
+        scaOutPanel.add(scaOutHtmlRadio, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        scaStartBtn = new JButton();
+        scaStartBtn.setText("START");
+        scaActionPanel.add(scaStartBtn, new GridConstraints(1, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        outputFileLabel = new JLabel();
+        outputFileLabel.setText("OUTPUT FILE");
+        scaActionPanel.add(outputFileLabel, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 1, false));
+        outputFileText = new JTextField();
+        scaActionPanel.add(outputFileText, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
+        scaResultOpenBtn = new JButton();
+        scaResultOpenBtn.setText("OPEN");
+        scaActionPanel.add(scaResultOpenBtn, new GridConstraints(2, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         advancePanel = new JPanel();
-        advancePanel.setLayout(new GridLayoutManager(3, 1, new Insets(0, 0, 0, 0), -1, -1));
+        advancePanel.setLayout(new GridLayoutManager(4, 1, new Insets(0, 0, 0, 0), -1, -1));
         tabbedPanel.addTab("advance", advancePanel);
         javaVulSearchPanel = new JPanel();
         javaVulSearchPanel.setLayout(new GridLayoutManager(5, 3, new Insets(0, 0, 0, 0), -1, -1));
-        advancePanel.add(javaVulSearchPanel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        advancePanel.add(javaVulSearchPanel, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
         javaVulSearchPanel.setBorder(BorderFactory.createTitledBorder(null, "Java Vulnerability", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
         JNDIButton = new JButton();
         JNDIButton.setText("JNDI");
@@ -1325,10 +1546,10 @@ public class MainForm {
         hessianButton.setText("Hessian readObject");
         javaVulSearchPanel.add(hessianButton, new GridConstraints(4, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final Spacer spacer2 = new Spacer();
-        advancePanel.add(spacer2, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        advancePanel.add(spacer2, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         piPanel = new JPanel();
         piPanel.setLayout(new GridLayoutManager(7, 2, new Insets(0, 0, 0, 0), -1, -1));
-        advancePanel.add(piPanel, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        advancePanel.add(piPanel, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
         piPanel.setBorder(BorderFactory.createTitledBorder(null, "Plugins", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
         encoderLabel = new JLabel();
         encoderLabel.setText("A tool for encode/decode encrypt/decrypt operations");
@@ -1372,20 +1593,51 @@ public class MainForm {
         serUtilBtn = new JButton();
         serUtilBtn.setText("Start");
         piPanel.add(serUtilBtn, new GridConstraints(6, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        analysis = new JPanel();
+        analysis.setLayout(new GridLayoutManager(2, 6, new Insets(0, 0, 0, 0), -1, -1));
+        advancePanel.add(analysis, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        analysis.setBorder(BorderFactory.createTitledBorder(null, "Analysis", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
+        frameBtn = new JButton();
+        frameBtn.setText("Full Frame");
+        analysis.add(frameBtn, new GridConstraints(0, 4, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, new Dimension(150, -1), 0, false));
+        cfgBtn = new JButton();
+        cfgBtn.setText("Show CFG");
+        analysis.add(cfgBtn, new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, new Dimension(150, -1), 0, false));
+        simpleFrameButton = new JButton();
+        simpleFrameButton.setText("Simple Frame");
+        analysis.add(simpleFrameButton, new GridConstraints(0, 2, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, new Dimension(150, -1), 0, false));
+        htmlGraphBtn = new JButton();
+        htmlGraphBtn.setText("HTML Graph");
+        analysis.add(htmlGraphBtn, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         leftPanel = new JPanel();
-        leftPanel.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+        leftPanel.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
         corePanel.add(leftPanel, new GridConstraints(0, 0, 4, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_VERTICAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
         treeScrollPanel = new JScrollPane();
-        leftPanel.add(treeScrollPanel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, new Dimension(250, 900), new Dimension(250, 900), null, 0, false));
+        leftPanel.add(treeScrollPanel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, new Dimension(250, 800), new Dimension(250, 800), null, 0, false));
         fileTree = new FileTree();
         treeScrollPanel.setViewportView(fileTree);
+        fileTreeSearchPanel = new JPanel();
+        fileTreeSearchPanel.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+        fileTreeSearchPanel.setVisible(false);
+        leftPanel.add(fileTreeSearchPanel, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        searchFileNamePanel = new JPanel();
+        searchFileNamePanel.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
+        fileTreeSearchPanel.add(searchFileNamePanel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        searchFileNamePanel.setBorder(BorderFactory.createTitledBorder(null, "File Name (press 'ENTER' to next)", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
+        fileTreeSearchTextField = new JTextField();
+        fileTreeSearchTextField.setVisible(true);
+        searchFileNamePanel.add(fileTreeSearchTextField, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
+        fileTreeSearchLabel = new JLabel();
+        fileTreeSearchLabel.setText("");
+        fileTreeSearchLabel.setVisible(false);
+        searchFileNamePanel.add(fileTreeSearchLabel, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         logPanel = new JPanel();
         logPanel.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
         corePanel.add(logPanel, new GridConstraints(3, 1, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
         logScroll = new JScrollPane();
         logPanel.add(logScroll, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, new Dimension(500, 100), new Dimension(500, 100), null, 0, false));
         logScroll.setBorder(BorderFactory.createTitledBorder(null, "Log", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
-        logArea = new JTextArea();
+        logArea = new JTextPane();
         logArea.setBackground(new Color(-13619152));
         logArea.setEditable(false);
         logArea.setForeground(new Color(-16012544));
@@ -1399,7 +1651,7 @@ public class MainForm {
         allMethodList = new JList();
         allMethodScroll.setViewportView(allMethodList);
         curPanel = new JPanel();
-        curPanel.setLayout(new GridLayoutManager(3, 2, new Insets(0, 0, 0, 0), -1, -1));
+        curPanel.setLayout(new GridLayoutManager(3, 3, new Insets(0, 0, 0, 0), -1, -1));
         corePanel.add(curPanel, new GridConstraints(2, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
         curPanel.setBorder(BorderFactory.createTitledBorder(null, "Current", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
         curClassLabel = new JLabel();
@@ -1407,7 +1659,7 @@ public class MainForm {
         curPanel.add(curClassLabel, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 1, false));
         curClassText = new JTextField();
         curClassText.setEditable(false);
-        curPanel.add(curClassText, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
+        curPanel.add(curClassText, new GridConstraints(1, 1, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
         curMethodLabel = new JLabel();
         curMethodLabel.setText("Method");
         curPanel.add(curMethodLabel, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 1, false));
@@ -1419,7 +1671,10 @@ public class MainForm {
         curPanel.add(curJarLabel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 1, false));
         curJarText = new JTextField();
         curJarText.setEditable(false);
-        curPanel.add(curJarText, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
+        curPanel.add(curJarText, new GridConstraints(0, 1, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
+        addToFavoritesButton = new JButton();
+        addToFavoritesButton.setText("add to favorites");
+        curPanel.add(addToFavoritesButton, new GridConstraints(2, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         ButtonGroup buttonGroup;
         buttonGroup = new ButtonGroup();
         buttonGroup.add(methodDefinitionRadioButton);
@@ -1431,6 +1686,9 @@ public class MainForm {
         buttonGroup = new ButtonGroup();
         buttonGroup.add(likeSearchRadioButton);
         buttonGroup.add(equalsSearchRadioButton);
+        buttonGroup = new ButtonGroup();
+        buttonGroup.add(scaOutConsoleRadio);
+        buttonGroup.add(scaOutHtmlRadio);
     }
 
     /**

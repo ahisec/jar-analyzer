@@ -1,5 +1,7 @@
 package me.n1ar4.jar.analyzer.gui.tree;
 
+import cn.hutool.core.util.StrUtil;
+import me.n1ar4.jar.analyzer.gui.util.LogUtil;
 import me.n1ar4.jar.analyzer.starter.Const;
 
 import javax.imageio.ImageIO;
@@ -12,32 +14,37 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Objects;
 
 public class FileTree extends JTree {
-    protected DefaultMutableTreeNode rootNode;
-    protected DefaultTreeModel fileTreeModel;
-    private final DefaultTreeModel savedModel;
     private static ImageIcon classIcon;
 
     static {
         try {
-            classIcon = new ImageIcon(ImageIO.read(
-                    Objects.requireNonNull(FileTree.class
-                            .getClassLoader().getResourceAsStream("img/class.png"))));
+            classIcon = new ImageIcon(ImageIO.read(Objects.requireNonNull(
+                    FileTree.class.getClassLoader().getResourceAsStream("img/class.png"))));
         } catch (Exception ignored) {
         }
     }
+
+    private final DefaultTreeModel savedModel;
+    protected DefaultMutableTreeNode rootNode;
+    protected DefaultTreeModel fileTreeModel;
 
     public FileTree() {
         savedModel = (DefaultTreeModel) this.getModel();
         DefaultTreeCellRenderer renderer = new DefaultTreeCellRenderer() {
             @Override
-            public Component getTreeCellRendererComponent(JTree tree, Object value,
-                                                          boolean sel, boolean expanded,
-                                                          boolean leaf, int row, boolean hasFocus) {
+            public Component getTreeCellRendererComponent(
+                    JTree tree, Object value,
+                    boolean sel, boolean expanded, boolean leaf,
+                    int row, boolean hasFocus) {
                 super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
                 if (leaf && value instanceof DefaultMutableTreeNode) {
                     DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
@@ -78,11 +85,14 @@ public class FileTree extends JTree {
     }
 
     private void initListeners() {
+        // 2024-07-31 删除 addTreeSelectionListener
+        // 不需要提供自动的滚动功能 影响正常使用
         addTreeExpansionListener(new TreeExpansionListener() {
             public void treeCollapsed(TreeExpansionEvent event) {
             }
 
             public void treeExpanded(TreeExpansionEvent event) {
+                clearSelection();
                 TreePath path = event.getPath();
                 DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) path.getLastPathComponent();
                 treeNode.removeAllChildren();
@@ -139,7 +149,79 @@ public class FileTree extends JTree {
                     subNode.add(new DefaultMutableTreeNode("fake"));
                 }
                 node.add(subNode);
+
+                try {
+                    addSelectionPath(new TreePath(node.getPath()));
+                } catch (Exception ignored) {
+                }
             }
         }
+    }
+
+    public static volatile boolean found = false;
+
+    public static void setFound(boolean found) {
+        FileTree.found = found;
+    }
+
+    public static boolean isFound() {
+        return found;
+    }
+
+    private void expandPathTarget(Enumeration<?> parent, String[] split) {
+        if (found) {
+            return;
+        }
+        while (parent.hasMoreElements()) {
+            DefaultMutableTreeNode children = (DefaultMutableTreeNode) parent.nextElement();
+            for (int i = 0; i < split.length - 1; i++) {
+                if (children.toString().equals(split[i])) {
+                    if (!found) {
+                        expandPath(new TreePath(children.getPath()));
+                    }
+                    if (split.length - 2 == i) {
+                        Enumeration<?> children2 = children.children();
+                        while (children2.hasMoreElements()) {
+                            DefaultMutableTreeNode end = (DefaultMutableTreeNode) children2.nextElement();
+                            String var0 = "";
+                            if (split[split.length - 1].contains("$")) {
+                                var0 = StrUtil.subBefore(split[split.length - 1], "$", false);
+                            }
+                            if (end.toString().equals(split[split.length - 1] + ".class") ||
+                                    (StrUtil.isNotEmpty(var0) && end.toString().equals(var0 + ".class"))) {
+                                TreePath tempPath = new TreePath(end.getPath());
+                                setSelectionPath(tempPath);
+                                scrollPathToVisible(tempPath);
+                                found = true;
+                                return;
+                            }
+                        }
+                    }
+                    expandPathTarget(children.children(), split);
+                }
+            }
+        }
+    }
+
+    public void searchPathTarget(String classname) {
+        refresh();
+        String[] split = classname.split("/");
+
+        // CHECK FILE EXIST
+        Path dir = Paths.get(Const.tempDir);
+        Path classPath = dir.resolve(classname + ".class");
+        if (!Files.exists(classPath)) {
+            classname = "BOOT-INF/classes/" + classname;
+            classPath = dir.resolve(classname + ".class");
+            if (!Files.exists(classPath)) {
+                LogUtil.warn("class not found");
+                return;
+            }
+            split = classname.split("/");
+        }
+
+        Enumeration<?> children = rootNode.children();
+        FileTree.setFound(false);
+        expandPathTarget(children, split);
     }
 }

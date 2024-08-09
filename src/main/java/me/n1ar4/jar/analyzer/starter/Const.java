@@ -8,11 +8,11 @@ public interface Const {
     int GlobalASMOptions = ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG;
     int AnalyzeASMOptions = ClassReader.EXPAND_FRAMES;
     String app = "Jar Analyzer V2 - 4ra1n";
-    String version = "2.20";
+    String version = "2.24";
     String checkUpdateUrl = "https://jar-analyzer.oss-cn-hangzhou.aliyuncs.com/jar-analyzer/version.txt";
     String authorUrl = "https://github.com/4ra1n";
     String projectUrl = "https://github.com/jar-analyzer/jar-analyzer";
-    String newIssueUrl = "https://github.com/jar-analyzer/jar-analyzer/issues/new";
+    String newIssueUrl = "https://github.com/jar-analyzer/jar-analyzer/issues/new/choose";
     String dbFile = "jar-analyzer.db";
     String tempDir = "jar-analyzer-temp";
     String downDir = "jar-analyzer-download";
@@ -23,7 +23,6 @@ public interface Const {
     String FrameForm = "Jar Analyzer V2 - Frame";
     String SQLiteForm = "Jar Analyzer V2 - SQLite";
     String StringForm = "Jar Analyzer V2 - String";
-    String SearchForm = "Jar Analyzer V2 - Code Search";
     String RemoteForm = "Jar Analyzer V2 - Remote Load";
     String PartForm = "Jar Analyzer V2 - Partition Config";
     String SerUtilForm = "Jar Analyzer V2 - SerUtil";
