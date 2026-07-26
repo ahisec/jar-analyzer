@@ -24,6 +24,7 @@ import org.apache.commons.compress.archivers.zip.ZipFile;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -49,6 +50,35 @@ public class JarUtil {
             }
         }
         return false;
+    }
+
+    static Path resolveArchiveEntry(Path extractionRoot, String entryName) {
+        if (extractionRoot == null || entryName == null || entryName.isEmpty()) {
+            return null;
+        }
+
+        // ZIP entries use '/', but treating '\' as a separator as well prevents
+        // archives created on one platform from bypassing checks on another.
+        String normalizedName = entryName.replace('\\', '/');
+        if (normalizedName.startsWith("/") ||
+                (normalizedName.length() >= 2 &&
+                        Character.isLetter(normalizedName.charAt(0)) &&
+                        normalizedName.charAt(1) == ':')) {
+            return null;
+        }
+
+        try {
+            Path root = extractionRoot.toAbsolutePath().normalize();
+            Path entry = Paths.get(normalizedName);
+            if (entry.isAbsolute()) {
+                return null;
+            }
+
+            Path target = root.resolve(entry).normalize();
+            return target.startsWith(root) ? target : null;
+        } catch (InvalidPathException e) {
+            return null;
+        }
     }
 
     public static List<ClassFileEntity> resolveNormalJarFile(String jarPath, Integer jarId) {
@@ -236,15 +266,14 @@ public class JarUtil {
                     // 可能还有其他的绕过情况？
                     // 先 normalize 处理 ../ 情况
                     // 再保证 entryPath 绝对路径必须以解压临时目录 tmpDir 开头
-                    Path entryPath = tmpDir.resolve(jarEntryName).toAbsolutePath().normalize();
-                    Path tmpDirAbs = tmpDir.toAbsolutePath();
-                    if (!entryPath.toString().startsWith(tmpDirAbs.toString())) {
+                    Path entryPath = resolveArchiveEntry(tmpDir, jarEntryName);
+                    if (entryPath == null) {
                         // 不抛出异常只跳过这个文件继续处理其他文件
-                        logger.warn("detect zip slip vulnearbility");
+                        logger.warn("detect zip slip vulnerability");
                         continue;
                     }
                     // ============================================================
-                    Path fullPath = tmpDir.resolve(jarEntryName);
+                    Path fullPath = entryPath;
                     if (!jarEntry.isDirectory()) {
                         // 处理配置文件
                         if (isConfigFile(jarEntryName)) {
@@ -337,15 +366,14 @@ public class JarUtil {
                 // 可能还有其他的绕过情况？
                 // 先 normalize 处理 ../ 情况
                 // 再保证 entryPath 绝对路径必须以解压临时目录 tmpDir 开头
-                Path entryPath = tmpDir.resolve(jarEntryName).toAbsolutePath().normalize();
-                Path tmpDirAbs = tmpDir.toAbsolutePath();
-                if (!entryPath.toString().startsWith(tmpDirAbs.toString())) {
+                Path entryPath = resolveArchiveEntry(tmpDir, jarEntryName);
+                if (entryPath == null) {
                     // 不抛出异常只跳过这个文件继续处理其他文件
-                    logger.warn("detect zip slip vulnearbility");
+                    logger.warn("detect zip slip vulnerability");
                     continue;
                 }
                 // ============================================================
-                Path fullPath = tmpDir.resolve(jarEntryName);
+                Path fullPath = entryPath;
                 if (!jarEntry.isDirectory()) {
                     // 处理配置文件
                     if (isConfigFile(jarEntryName)) {
